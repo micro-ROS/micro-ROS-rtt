@@ -1,6 +1,8 @@
 #include <cstdio>
 #include <sstream>
 #include <list>
+#include <chrono>
+#include <cmath>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/header.hpp>
 
@@ -15,6 +17,7 @@ public:
     uint32_t padding_size = this->declare_parameter("padding_size", 0);
     padding_ = std::string(padding_size, ' ');
     max_messages_ = this->declare_parameter("max_messages", 0);
+    period_ = this->declare_parameter("period", 0.1f);
 
     publisher_ = this->create_publisher<std_msgs::msg::Header>("uros_ping", 10);
     
@@ -100,7 +103,8 @@ public:
         
         this->publisher_->publish(*message);        
       };
-    timer_ = this->create_wall_timer(100ms, timer_callback);
+    auto p = std::chrono::milliseconds(static_cast<int>(std::round(period_*1000.0f)));
+    timer_ = this->create_wall_timer(p, timer_callback);
   }
 protected:
   void print_status(uint32_t count, bool receive_ok, const rclcpp::Duration& elapsed, const rclcpp::Time& message_time,
@@ -120,6 +124,7 @@ private:
   bool initialized_;
   std::string padding_;
   uint32_t max_messages_;
+  float period_;
 };
 
 int main(int argc, char ** argv)

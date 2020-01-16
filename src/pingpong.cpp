@@ -9,9 +9,13 @@ using namespace std::chrono_literals;
 class PingPongNode : public rclcpp::Node 
 {
 public:
-  PingPongNode()
-  : Node("pingpong"), count_(0), initialized_(false)
+  PingPongNode(const rclcpp::NodeOptions& opts)
+  : Node("pingpong", opts), count_(0), initialized_(false), padding_("")
   {    
+    uint32_t padding_size = this->declare_parameter("padding_size", 0);
+    padding_ = std::string(padding_size, ' ');
+    max_messages_ = this->declare_parameter("max_messages", 0);
+
     publisher_ = this->create_publisher<std_msgs::msg::Header>("uros_ping", 10);
     
     subscription_ = this->create_subscription<std_msgs::msg::Header>(
@@ -72,24 +76,29 @@ public:
         }
 
         print_status(count, receive_ok, elapsed_time, rclcpp::Time(msg->stamp), received_time, timestamp, comment.str());
+
+        if(max_messages_ > 0 && count_ >= max_messages_) {
+          rclcpp::shutdown();
+        }
       });
 
     auto timer_callback =
       [this]() -> void {
         auto message = std::make_shared<std_msgs::msg::Header>();
+        std::stringstream str;
         rclcpp::Time send_time = now();
         
         // we encode the send time into the stamp as well as into the frame_id as a consistency check
-        std::stringstream str;
-        str << "ping " << this->count_ << ' ' << send_time.nanoseconds();
+        str << "ping " << this->count_ << ' ' << send_time.nanoseconds() << padding_;
         message->frame_id = str.str();        
         message->stamp = send_time; 
+        
         if(initialized_) {
           counts_.push_back(count_++);
           outstanding_.push_back(message);
         }
         
-        this->publisher_->publish(*message);
+        this->publisher_->publish(*message);        
       };
     timer_ = this->create_wall_timer(100ms, timer_callback);
   }
@@ -109,12 +118,14 @@ private:
   std::list<uint32_t> counts_;
   std::list<std_msgs::msg::Header::SharedPtr> outstanding_;  
   bool initialized_;
+  std::string padding_;
+  uint32_t max_messages_;
 };
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<PingPongNode>());
+  rclcpp::spin(std::make_shared<PingPongNode>(rclcpp::NodeOptions()));
   rclcpp::shutdown();
   
   return 0;

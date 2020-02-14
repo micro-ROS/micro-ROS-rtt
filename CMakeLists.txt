@@ -20,17 +20,31 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 
-add_executable(pingpong src/pingpong.cpp)
-target_include_directories(pingpong PUBLIC
+add_executable(pingpong_client src/pingpong_client.cpp)
+target_include_directories(pingpong_client PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 ament_target_dependencies(
-  pingpong
+  pingpong_client
   "rclcpp"
   "std_msgs"
 )
 
-install(TARGETS pingpong
+add_executable(pingpong_server src/pingpong_server.cpp)
+target_include_directories(pingpong_server PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+ament_target_dependencies(
+  pingpong_server
+  "rclcpp"
+  "std_msgs"
+)
+
+install(TARGETS pingpong_client
+  EXPORT export_${PROJECT_NAME}
+  DESTINATION lib/${PROJECT_NAME})
+
+install(TARGETS pingpong_server
   EXPORT export_${PROJECT_NAME}
   DESTINATION lib/${PROJECT_NAME})
 

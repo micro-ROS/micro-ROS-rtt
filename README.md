@@ -14,6 +14,8 @@ This is intended to be used with the "uros_pong_server" running on a Micro-ROS s
 
 The results-file can be read into pandas using `pandas.read_csv("<filename>", sep=" ", index_col=0)`. It has what is hopefully a descriptive header.
 
+Details on the measurement approach are explained in [doc/APPROACH.md](doc/APPROACH.md).
+
 
 ## Requirements, how to build, test, install, use, etc.
 
